@@ -1,6 +1,11 @@
 {
     "project": {
+<<<<<<< HEAD
         "name": "kinkymachine"
+=======
+        "name": "mybgg",
+        "title": ""
+>>>>>>> master
     },
     "boardgamegeek": {
         "user_name": "kinkymachine",
