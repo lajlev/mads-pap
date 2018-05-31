@@ -1,11 +1,13 @@
 import json
 import math
-from collections import namedtuple, defaultdict
+import re
+from collections import defaultdict, namedtuple
 from textwrap import dedent
 
 from algoliasearch import algoliasearch
 from boardgamegeek import BGGClient
 from boardgamegeek.cache import CacheBackendSqlite
+
 
 class BoardGame:
     def __init__(self, game_data, tags=[], expansions=[]):
@@ -196,6 +198,24 @@ class Indexer:
 
         return facet_types[type_]
 
+    def _smart_truncate(self, content, length=700, suffix='...'):
+        if len(content) <= length:
+            return content
+        else:
+            return ' '.join(content[:length+1].split(' ')[0:-1]) + suffix
+
+    def _prepare_description(self, description):
+        # Take only the first paragraph
+        description = description[:description.index("\n\n")]
+
+        # Remove unnessesary spacing
+        description = re.sub(r"\s+", " ", description).strip()
+
+        # Cut at 700 characters, but not in the middle of a sentence
+        description = self._smart_truncate(description)
+
+        return description
+
     def add_objects(self, collection):
         games = [Indexer.todict(game) for game in collection]
         for game in games:
@@ -210,6 +230,9 @@ class Indexer:
             # Don't index descriptions of expansions, they make objects too big
             for expansion in game["expansions"]:
                 del(expansion["description"])
+
+            # Make sure description is not too long
+            game["description"] = self._prepare_description(game["description"])
 
         self.index.add_objects(games)
 
